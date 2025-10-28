@@ -2421,8 +2421,6 @@ static bool8 LoadPokedexListPage(u8 page)
             // when returning to search results after selecting an evo, we have to restore
             // the original dexNum because the search results page doesn't rebuild the list
             sPokedexListItem->dexNum = sPokedexView->originalSearchSelectionNum;
-            sPokedexListItem->seen   = GetSetPokedexFlag(sPokedexView->originalSearchSelectionNum, FLAG_GET_SEEN);
-            sPokedexListItem->owned  = GetSetPokedexFlag(sPokedexView->originalSearchSelectionNum, FLAG_GET_CAUGHT);
             sPokedexView->originalSearchSelectionNum = 0;
         }
         CreateMonSpritesAtPos(sPokedexView->selectedPokemon, 0xE);
@@ -4524,6 +4522,8 @@ static u8 PrintCryScreenSpeciesName(u8 windowId, u16 num, u8 left, u8 top)
 // All others use personality 0
 static u32 GetPokedexMonPersonality(u16 species)
 {
+    return MALE_PERSONALITY;
+    /*
     if (species == SPECIES_UNOWN || species == SPECIES_SPINDA)
     {
         if (species == SPECIES_UNOWN)
@@ -4535,12 +4535,13 @@ static u32 GetPokedexMonPersonality(u16 species)
     {
         return MALE_PERSONALITY;
     }
+    */
 }
 
 static u16 CreateMonSpriteFromNationalDexNumberHGSS(u16 nationalNum, s16 x, s16 y, u16 paletteSlot)
 {
     u32 species = NationalPokedexNumToSpeciesHGSS(nationalNum);
-    return CreateMonPicSprite(species, FALSE, GetPokedexMonPersonality(species), TRUE, x, y, paletteSlot, TAG_NONE);
+    return CreateMonPicSprite(nationalNum, FALSE, GetPokedexMonPersonality(species), TRUE, x, y, paletteSlot, TAG_NONE);
 }
 
 static u16 GetPokemonScaleFromNationalDexNumber(u16 nationalNum)
@@ -6313,17 +6314,6 @@ static void HandlePreEvolutionSpeciesPrint(u8 taskId, u16 preSpecies, u16 specie
     }
 }
 
-static bool32 HasTwoPreEvolutions(u32 species)
-{
-    switch (species)
-    {
-        case SPECIES_GHOLDENGO:
-            return TRUE;
-        default:
-            return FALSE;
-    }
-}
-
 static u8 PrintPreEvolutions(u8 taskId, u16 species)
 {
     u16 i;
@@ -6375,37 +6365,11 @@ static u8 PrintPreEvolutions(u8 taskId, u16 species)
         {
             if (evolutions[j].targetSpecies == species)
             {
-                if (numPreEvolutions == 0)
-                {
-                    preEvolutionOne = i;
-                    numPreEvolutions += 1;
-                    if (!HasTwoPreEvolutions(species))
-                        break;
-                }
-                else
-                {
-                    preEvolutionTwo = i;
-                    numPreEvolutions += 1;
-                    break;
-                }
+                preEvolutionOne = i;
+                numPreEvolutions += 1;
+                break;
             }
         }
-    }
-
-    if (HasTwoPreEvolutions(species))
-    {
-        CreateCaughtBallEvolutionScreen(preEvolutionOne, base_x - 9, base_y + base_y_offset*0, 0);
-        HandlePreEvolutionSpeciesPrint(taskId, preEvolutionOne, species, base_x, base_y, base_y_offset, 0);
-
-        CreateCaughtBallEvolutionScreen(preEvolutionTwo, base_x - 9, base_y + base_y_offset*(numPreEvolutions - 1), 0);
-        HandlePreEvolutionSpeciesPrint(taskId, preEvolutionTwo, species, base_x, base_y, base_y_offset, numPreEvolutions - 1);
-
-        sPokedexView->sEvoScreenData.targetSpecies[0] = preEvolutionOne;
-        sPokedexView->sEvoScreenData.targetSpecies[1] = preEvolutionTwo;
-
-        sPokedexView->numPreEvolutions = numPreEvolutions;
-        sPokedexView->sEvoScreenData.numAllEvolutions += numPreEvolutions;
-        return numPreEvolutions;
     }
 
     //Calculate if previous evolution also has a previous evolution
@@ -7123,12 +7087,6 @@ static void PrintForms(u8 taskId, u16 species)
     u8 base_y_offset = 9;
     u8 times = 0;
     u8 y_offset_icons = 0; //For unown only
-
-    if (species == SPECIES_UNOWN)
-        y_offset_icons = 8;
-
-    if (GetFormSpeciesId(species, 0) == SPECIES_UNOWN)
-        y_offset_icons = 8;
 
     StringCopy(gStringVar1, GetSpeciesName(species));
 

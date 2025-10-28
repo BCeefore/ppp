@@ -1581,11 +1581,13 @@ static inline u32 GetCriticalHitOdds(u32 critChance)
 
 static inline u32 IsBattlerLeekAffected(u32 battler, enum ItemHoldEffect holdEffect)
 {
+    /*
     if (holdEffect == HOLD_EFFECT_LEEK)
     {
         return GET_BASE_SPECIES_ID(gBattleMons[battler].species) == SPECIES_FARFETCHD
             || gBattleMons[battler].species == SPECIES_SIRFETCHD;
     }
+    */
     return FALSE;
 }
 
@@ -1598,10 +1600,12 @@ static inline u32 GetHoldEffectCritChanceIncrease(u32 battler, enum ItemHoldEffe
     case HOLD_EFFECT_SCOPE_LENS:
         critStageIncrease = 1;
         break;
+    /*
     case HOLD_EFFECT_LUCKY_PUNCH:
         if (gBattleMons[battler].species == SPECIES_CHANSEY)
             critStageIncrease = 2;
         break;
+    */
     case HOLD_EFFECT_LEEK:
         if (IsBattlerLeekAffected(battler, holdEffect))
             critStageIncrease = 2;
@@ -5694,29 +5698,26 @@ static bool32 HandleMoveEndMoveBlock(u32 moveEffect)
         return FALSE;
 
     u32 effect = FALSE;
-    u32 side = GetBattlerSide(gBattlerTarget);
     switch (moveEffect)
     {
     case EFFECT_KNOCK_OFF:
         if (gBattleStruct->battlerState[gBattlerTarget].itemCanBeKnockedOff
          && gBattleMons[gBattlerTarget].item != ITEM_NONE
          && IsBattlerTurnDamaged(gBattlerTarget)
-         && IsBattlerAlive(gBattlerAttacker)
-         && !(B_KNOCK_OFF_REMOVAL >= GEN_5 && side == B_SIDE_PLAYER && !(gBattleTypeFlags & BATTLE_TYPE_TRAINER)))
+         && IsBattlerAlive(gBattlerAttacker))
         {
+            u32 side = GetBattlerSide(gBattlerTarget);
             gLastUsedItem = gBattleMons[gBattlerTarget].item;
             gBattleMons[gBattlerTarget].item = 0;
             if (gBattleMons[gBattlerTarget].ability != ABILITY_GORILLA_TACTICS)
                 gBattleStruct->choicedMove[gBattlerTarget] = MOVE_NONE;
             CheckSetUnburden(gBattlerTarget);
 
-            // In Gen 5+, Knock Off removes the target's item rather than rendering it unusable
+            // In Gen 5+, Knock Off removes the target's item rather than rendering it unusable.
             if (B_KNOCK_OFF_REMOVAL >= GEN_5)
             {
                 BtlController_EmitSetMonData(gBattlerTarget, B_COMM_TO_CONTROLLER, REQUEST_HELDITEM_BATTLE, 0, sizeof(gBattleMons[gBattlerTarget].item), &gBattleMons[gBattlerTarget].item);
                 MarkBattlerForControllerExec(gBattlerTarget);
-                // Mark item as stolen so it will be restored after battle
-                gBattleStruct->itemLost[side][gBattlerPartyIndexes[gBattlerTarget]].stolen = TRUE;
             }
             else
             {
@@ -5878,7 +5879,7 @@ static bool32 HandleMoveEndMoveBlock(u32 moveEffect)
         }
         break;
     case EFFECT_STONE_AXE:
-        if (!IsHazardOnSide(side, HAZARDS_STEALTH_ROCK)
+        if (!IsHazardOnSide(GetBattlerSide(gBattlerTarget), HAZARDS_STEALTH_ROCK)
          && IsBattlerTurnDamaged(gBattlerTarget)
          && IsBattlerAlive(gBattlerAttacker))
         {
@@ -5889,7 +5890,7 @@ static bool32 HandleMoveEndMoveBlock(u32 moveEffect)
         }
         break;
     case EFFECT_CEASELESS_EDGE:
-        if (gSideTimers[side].spikesAmount < 3
+        if (gSideTimers[GetBattlerSide(gBattlerTarget)].spikesAmount < 3
          && IsBattlerTurnDamaged(gBattlerTarget)
          && IsBattlerAlive(gBattlerAttacker))
         {
@@ -14460,12 +14461,14 @@ static void Cmd_trainerslideout(void)
 
 static const u16 sTelekinesisBanList[] =
 {
+    /*
     SPECIES_DIGLETT,
     SPECIES_DUGTRIO,
     SPECIES_DIGLETT_ALOLA,
     SPECIES_DUGTRIO_ALOLA,
     SPECIES_SANDYGAST,
     SPECIES_PALOSSAND,
+    */
     SPECIES_GENGAR_MEGA,
 };
 
@@ -15288,55 +15291,34 @@ void BS_SetTerrain(void)
     switch (GetMoveEffect(gCurrentMove))
     {
     case EFFECT_MISTY_TERRAIN:
-        if (!(gFieldStatuses & STATUS_FIELD_MISTY_TERRAIN))
-        {
-            statusFlag = STATUS_FIELD_MISTY_TERRAIN;
-            gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_TERRAIN_SET_MISTY;
-        }
+        statusFlag = STATUS_FIELD_MISTY_TERRAIN;
+        gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_TERRAIN_SET_MISTY;
         break;
     case EFFECT_GRASSY_TERRAIN:
-        if (!(gFieldStatuses & STATUS_FIELD_GRASSY_TERRAIN))
-        {
-            statusFlag = STATUS_FIELD_GRASSY_TERRAIN;
-            gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_TERRAIN_SET_GRASSY;
-        }
+        statusFlag = STATUS_FIELD_GRASSY_TERRAIN;
+        gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_TERRAIN_SET_GRASSY;
         break;
     case EFFECT_ELECTRIC_TERRAIN:
-        if (!(gFieldStatuses & STATUS_FIELD_ELECTRIC_TERRAIN))
-        {
-            statusFlag = STATUS_FIELD_ELECTRIC_TERRAIN;
-            gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_TERRAIN_SET_ELECTRIC;
-        }
+        statusFlag = STATUS_FIELD_ELECTRIC_TERRAIN;
+        gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_TERRAIN_SET_ELECTRIC;
         break;
     case EFFECT_PSYCHIC_TERRAIN:
-        if (!(gFieldStatuses & STATUS_FIELD_PSYCHIC_TERRAIN))
-        {
-            statusFlag = STATUS_FIELD_PSYCHIC_TERRAIN;
-            gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_TERRAIN_SET_PSYCHIC;
-        }
+        statusFlag = STATUS_FIELD_PSYCHIC_TERRAIN;
+        gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_TERRAIN_SET_PSYCHIC;
         break;
     case EFFECT_HIT_SET_TERRAIN:
-        if (!(gFieldStatuses & GetMoveTerrainFlag(gCurrentMove)))
-        {
-            statusFlag = GetMoveTerrainFlag(gCurrentMove);
-            gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_TERRAIN_SET_PSYCHIC;
-        }
+        statusFlag = GetMoveTerrainFlag(gCurrentMove);
+        gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_TERRAIN_SET_PSYCHIC;
         break;
     default:
         break;
     }
-    if (statusFlag)
-    {
-        enum ItemHoldEffect atkHoldEffect = GetBattlerHoldEffect(gBattlerAttacker, TRUE);
-        gFieldStatuses &= ~STATUS_FIELD_TERRAIN_ANY;
-        gFieldStatuses |= statusFlag;
-        gFieldTimers.terrainTimer = gBattleTurnCounter + (atkHoldEffect == HOLD_EFFECT_TERRAIN_EXTENDER) ? 8 : 5;
-        gBattlescriptCurrInstr = cmd->nextInstr;
-    }
-    else
-    {
-        gBattlescriptCurrInstr = cmd->jumpInstr;
-    }
+    enum ItemHoldEffect atkHoldEffect = GetBattlerHoldEffect(gBattlerAttacker, TRUE);
+
+    gFieldStatuses &= ~STATUS_FIELD_TERRAIN_ANY;
+    gFieldStatuses |= statusFlag;
+    gFieldTimers.terrainTimer = gBattleTurnCounter + (atkHoldEffect == HOLD_EFFECT_TERRAIN_EXTENDER) ? 8 : 5;
+    gBattlescriptCurrInstr = cmd->nextInstr;
 }
 
 void BS_JumpIfTerrainAffected(void)
@@ -15357,10 +15339,12 @@ void BS_TryReflectType(void)
     u32 targetTypes[3];
     GetBattlerTypes(gBattlerTarget, FALSE, targetTypes);
 
+    /*
     if (targetBaseSpecies == SPECIES_ARCEUS || targetBaseSpecies == SPECIES_SILVALLY)
     {
         gBattlescriptCurrInstr = cmd->failInstr;
     }
+    */
     else if (GetActiveGimmick(gBattlerAttacker) == GIMMICK_TERA)
     {
         gBattlescriptCurrInstr = cmd->failInstr;
@@ -17146,12 +17130,13 @@ void BS_EraseArenaRefTextBox(void)
 
 void BS_ArenaJudgmentString(void)
 {
-    NATIVE_ARGS(u8 id);
+    CMD_ARGS(u8 id);
     BattleStringExpandPlaceholdersToDisplayedString(gRefereeStringsTable[cmd->id]);
     BattlePutTextOnWindow(gDisplayedStringBattle, ARENA_WIN_JUDGMENT_TEXT);
     gBattlescriptCurrInstr = cmd->nextInstr;
 }
 
+// Argument passed but no use
 void BS_ArenaWaitMessage(void)
 {
     NATIVE_ARGS();
